@@ -2,19 +2,38 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import os
-from openpyxl import load_workbook
+import zipfile
+from openpyxl import Workbook, load_workbook
 
+# Path to Excel file
 DATA_FILE = "all_branch_data.xlsx"
 
-# Branch Code → (Branch Name, [Riders])
+# ✅ Step 1: Ensure Excel file is valid (create or repair if needed)
+def ensure_valid_excel(file_path):
+    if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
+        wb = Workbook()
+        wb.save(file_path)
+    else:
+        try:
+            with zipfile.ZipFile(file_path, 'r') as zf:
+                zf.testzip()
+        except zipfile.BadZipFile:
+            wb = Workbook()
+            wb.save(file_path)
+
+# Run validation check
+ensure_valid_excel(DATA_FILE)
+
+# ✅ Branch Code → (Branch Name, [Riders])
 branch_data = {
-    "0001": ("Korangi Branch", ["Ali", "Hamza", "Ikhlaq"]),
-    "6661": ("Phase II Branch", ["Sherry", "Hammad"]),
-    "7860": ("Lahore Branch", ["Qadeer", "Rashid", "Usman"]),
+    "ALI123": ("Ali Branch", ["Rider A", "Rider B", "Rider C"]),
+    "KHI789": ("Karachi Branch", ["Rider X", "Rider Y"]),
+    "LHR456": ("Lahore Branch", ["Rider M", "Rider N", "Rider Z"]),
 }
 
-st.title("📦 Commission Slip Submission Form")
+st.title("📦 Rider Slip Submission Form")
 
+# Step 2: Branch code input
 branch_code = st.text_input("Enter Your Branch Code")
 
 if branch_code in branch_data:
@@ -22,13 +41,13 @@ if branch_code in branch_data:
     st.success(f"✅ Welcome, {branch_name}!")
 
     date = st.date_input("Select Date", datetime.today())
-    rider = st.selectbox("Select Employee", riders)
+    rider = st.selectbox("Select Rider", riders)
     cash_slips = st.number_input("Cash Slips", min_value=0, step=1)
     online_slips = st.number_input("Online Slips", min_value=0, step=1)
 
     if st.button("Submit Entry"):
         total = cash_slips + online_slips
-        commission = cash_slips * 25 + online_slips * 50
+        commission = cash_slips * 30 + online_slips * 20
 
         new_data = {
             "Date": date.strftime("%Y-%m-%d"),
@@ -42,20 +61,15 @@ if branch_code in branch_data:
 
         new_df = pd.DataFrame([new_data])
 
-        if os.path.exists(DATA_FILE):
-            with pd.ExcelWriter(DATA_FILE, engine="openpyxl", mode="a", if_sheet_exists="overlay") as writer:
-                # Load existing workbook
-                book = writer.book
-                if branch_name in book.sheetnames:
-                    existing_df = pd.read_excel(DATA_FILE, sheet_name=branch_name)
-                    updated_df = pd.concat([existing_df, new_df], ignore_index=True)
-                else:
-                    updated_df = new_df
+        with pd.ExcelWriter(DATA_FILE, engine="openpyxl", mode="a", if_sheet_exists="overlay") as writer:
+            book = writer.book
+            if branch_name in book.sheetnames:
+                existing_df = pd.read_excel(DATA_FILE, sheet_name=branch_name)
+                updated_df = pd.concat([existing_df, new_df], ignore_index=True)
+            else:
+                updated_df = new_df
 
-                updated_df.to_excel(writer, sheet_name=branch_name, index=False)
-        else:
-            with pd.ExcelWriter(DATA_FILE, engine="openpyxl") as writer:
-                new_df.to_excel(writer, sheet_name=branch_name, index=False)
+            updated_df.to_excel(writer, sheet_name=branch_name, index=False)
 
         st.success("✅ Slip submitted and saved to your branch sheet.")
 

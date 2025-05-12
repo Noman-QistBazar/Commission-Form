@@ -26,9 +26,9 @@ ensure_valid_excel(DATA_FILE)
 
 # ✅ Branch Code → (Branch Name, [Riders])
 branch_data = {
-    "ALI123": ("Ali Branch", ["Rider A", "Rider B", "Rider C"]),
-    "KHI789": ("Karachi Branch", ["Rider X", "Rider Y"]),
-    "LHR456": ("Lahore Branch", ["Rider M", "Rider N", "Rider Z"]),
+    "6661": ("Ali Branch", ["Rider A", "Rider B", "Rider C"]),
+    "0001": ("Karachi Branch", ["Rider X", "Rider Y"]),
+    "7860": ("Lahore Branch", ["Rider M", "Rider N", "Rider Z"]),
 }
 
 st.title("📦 Rider Slip Submission Form")
